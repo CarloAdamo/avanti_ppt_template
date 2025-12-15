@@ -14,13 +14,14 @@
   <HighResolutionIconUrl DefaultValue="https://influenceab.sharepoint.com/_layouts/15/images/siteIcon.png"/>
   <SupportUrl DefaultValue="https://influenceab.sharepoint.com"/>
   <AppDomains>
+    <AppDomain>https://carloadamo.github.io</AppDomain>
     <AppDomain>https://influenceab.sharepoint.com</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Presentation"/>
   </Hosts>
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://influenceab.sharepoint.com/:u:/s/Avanti/IQDMbgyvQRrxQbcasXxcRRzMAVTVrOTYHuHD3Mn5Tlmoe8c?e=aOKzhf"/>
+    <SourceLocation DefaultValue="https://carloadamo.github.io/avanti_ppt_template/taskpane.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
@@ -71,7 +72,7 @@
       </bt:Images>
       <bt:Urls>
         <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://influenceab.sharepoint.com"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://influenceab.sharepoint.com/:u:/s/Avanti/IQDMbgyvQRrxQbcasXxcRRzMAVTVrOTYHuHD3Mn5Tlmoe8c?e=aOKzhf"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://carloadamo.github.io/avanti_ppt_template/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GetStarted.Title" DefaultValue="Get started with Avanti Templates!"/>
