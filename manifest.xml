@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+  <Id>db8f2e6a-0b7c-48bb-8a11-123456789abc</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Avanti</ProviderName>
+  <DefaultLocale>sv-SE</DefaultLocale>
+  <DisplayName DefaultValue="Avanti Templates"/>
+  <Description DefaultValue="Open Avanti-templates in a side panel."/>
+  <IconUrl DefaultValue="https://influenceab.sharepoint.com/_layouts/15/images/siteIcon.png"/>
+  <HighResolutionIconUrl DefaultValue="https://influenceab.sharepoint.com/_layouts/15/images/siteIcon.png"/>
+  <SupportUrl DefaultValue="https://influenceab.sharepoint.com"/>
+  <AppDomains>
+    <AppDomain>https://influenceab.sharepoint.com</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Presentation"/>
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://influenceab.sharepoint.com/:u:/s/Avanti/IQDMbgyvQRrxQbcasXxcRRzMAVTVrOTYHuHD3Mn5Tlmoe8c?e=aOKzhf"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Presentation">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="AvantiGroup">
+                <Label resid="AvantiGroup.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="TaskpaneButton">
+                  <Label resid="TaskpaneButton.Label"/>
+                  <Supertip>
+                    <Title resid="TaskpaneButton.SupertipTitle"/>
+                    <Description resid="TaskpaneButton.SupertipText"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>ButtonId1</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://influenceab.sharepoint.com/_layouts/15/images/siteIcon.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://influenceab.sharepoint.com/_layouts/15/images/siteIcon.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://influenceab.sharepoint.com/_layouts/15/images/siteIcon.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://influenceab.sharepoint.com"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://influenceab.sharepoint.com/:u:/s/Avanti/IQDMbgyvQRrxQbcasXxcRRzMAVTVrOTYHuHD3Mn5Tlmoe8c?e=aOKzhf"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="Get started with Avanti Templates!"/>
+        <bt:String id="AvantiGroup.Label" DefaultValue="Avanti"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="Avanti Templates"/>
+        <bt:String id="TaskpaneButton.SupertipTitle" DefaultValue="Avanti Templates"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="click the button Avanti Templates to open Avanti-templates."/>
+        <bt:String id="TaskpaneButton.SupertipText" DefaultValue="Open Avanti-templates in a side panel."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

@@ -1,0 +1,62 @@
+{
+    "file": "Avanti_PPT_Test.pptx",
+    "slides": [
+        {
+            "slide_index": 2,
+            "title": "Kickoff presentations",
+            "summary": "Kort intro och syfte med kickoff.",
+            "tags": [
+                "kickoff"
+            ]
+        },
+        {
+            "slide_index": 4,
+            "title": "Today",
+            "summary": "Mål, process, mötesplan.",
+            "tags": [
+                "agenda"
+            ]
+        },
+        {
+            "slide_index": 5,
+            "title": "Today",
+            "summary": "Introduktioner, WoW, workshops, nästa steg.",
+            "tags": [
+                "agenda"
+            ]
+        },
+        {
+            "slide_index": 9,
+            "title": "Agenda",
+            "summary": "Charter, scope, milstolpar, stakeholders, risk.",
+            "tags": [
+                "agenda",
+                "project-charter"
+            ]
+        },
+        {
+            "slide_index": 15,
+            "title": "Project charter for Project [insert name]",
+            "summary": "Mål, KPIs, scope, stakeholders, schema.",
+            "tags": [
+                "project-charter"
+            ]
+        },
+        {
+            "slide_index": 18,
+            "title": "Status reports",
+            "summary": "Format för veckostatus, färgkodning, fokusområden.",
+            "tags": [
+                "status"
+            ]
+        },
+        {
+            "slide_index": 20,
+            "title": "Status update [Insert date]: [Insert project name]",
+            "summary": "Initiativ, uppdateringar, övergripande status, risker.",
+            "tags": [
+                "status"
+            ]
+        }
+    ]
+}
