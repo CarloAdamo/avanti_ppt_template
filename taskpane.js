@@ -82,20 +82,38 @@ async function loadSlides() {
     }
 }
 
+// Semantisk sökning via Supabase Edge Function
+async function semanticSearch(query) {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/search-slides`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query })
+    });
+    return response.json();
+}
+
 // Sök bland slides
-function searchSlides(query) {
+let searchTimeout = null;
+async function searchSlides(query) {
     if (!query.trim()) {
         renderSlides(SLIDES);
         return;
     }
 
-    const q = query.toLowerCase();
-    const filtered = SLIDES.filter(slide =>
-        (slide.name || '').toLowerCase().includes(q) ||
-        (slide.description || '').toLowerCase().includes(q) ||
-        (slide.tags || []).some(tag => tag.toLowerCase().includes(q))
-    );
-    renderSlides(filtered);
+    // Visa loading
+    document.getElementById('status').textContent = "Söker...";
+
+    try {
+        const results = await semanticSearch(query);
+        renderSlides(results);
+        document.getElementById('status').textContent = `${results.length} träffar`;
+    } catch (error) {
+        console.error("Search error:", error);
+        document.getElementById('status').textContent = "Sökfel";
+    }
 }
 
 async function init() {
@@ -103,9 +121,12 @@ async function init() {
     await loadSlides();
     document.getElementById('status').textContent = "Redo!";
 
-    // Lägg till sökfunktion
+    // Lägg till sökfunktion med debounce (väntar 500ms efter sista knapptryckning)
     document.getElementById('search').addEventListener('input', (e) => {
-        searchSlides(e.target.value);
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchSlides(e.target.value);
+        }, 500);
     });
 }
 
