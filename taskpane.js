@@ -98,15 +98,23 @@ function searchSlides(query) {
     renderSlides(filtered);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    Office.onReady(async () => {
-        document.getElementById('status').textContent = "Laddar...";
-        await loadSlides();
-        document.getElementById('status').textContent = "Redo!";
+async function init() {
+    document.getElementById('status').textContent = "Laddar...";
+    await loadSlides();
+    document.getElementById('status').textContent = "Redo!";
 
-        // Lägg till sökfunktion
-        document.getElementById('search').addEventListener('input', (e) => {
-            searchSlides(e.target.value);
-        });
+    // Lägg till sökfunktion
+    document.getElementById('search').addEventListener('input', (e) => {
+        searchSlides(e.target.value);
     });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Kolla om Office.js finns
+    if (typeof Office !== 'undefined') {
+        Office.onReady(init);
+    } else {
+        // Fallback för test utanför Office
+        init();
+    }
 });
