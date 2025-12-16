@@ -28,14 +28,29 @@
         }
 
         .card {
-            border: 1px solid #eee;
+            border: 1px solid #ddd;
             padding: 10px;
             margin: 8px 0;
             border-radius: 6px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .thumbnail {
+            width: 120px;
+            height: auto;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        .card-content {
+            flex: 1;
         }
 
         .title {
             font-weight: 600;
+            margin-bottom: 8px;
         }
 
         .meta {

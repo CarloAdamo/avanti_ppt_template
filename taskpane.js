@@ -1,13 +1,14 @@
-// Base URL för templates på GitHub Pages
+// Base URLs för GitHub Pages
 const BASE_URL = "https://carloadamo.github.io/avanti_ppt_template/templates/";
+const THUMB_URL = "https://carloadamo.github.io/avanti_ppt_template/thumbnails/";
 
 // Våra test-slides (senare ersätts detta med data från Supabase)
 const SLIDES = [
-    { id: 1, name: "Slide 1", file: "slide_1.pptx" },
-    { id: 2, name: "Slide 2", file: "slide_2.pptx" },
-    { id: 3, name: "Slide 3", file: "slide_3.pptx" },
-    { id: 4, name: "Slide 4", file: "slide_4.pptx" },
-    { id: 5, name: "Slide 5", file: "slide_5.pptx" },
+    { id: 1, name: "Slide 1", file: "slide_1.pptx", thumb: "slide_1.png" },
+    { id: 2, name: "Slide 2", file: "slide_2.pptx", thumb: "slide_2.png" },
+    { id: 3, name: "Slide 3", file: "slide_3.pptx", thumb: "slide_3.png" },
+    { id: 4, name: "Slide 4", file: "slide_4.pptx", thumb: "slide_4.png" },
+    { id: 5, name: "Slide 5", file: "slide_5.pptx", thumb: "slide_5.png" },
 ];
 
 // Hämta en fil och konvertera till base64
@@ -54,8 +55,11 @@ function renderSlides() {
     const container = document.getElementById('slides');
     container.innerHTML = SLIDES.map(slide => `
         <div class="card">
-            <div class="title">${slide.name}</div>
-            <button onclick="insertSlide('${slide.file}')">Infoga</button>
+            <img src="${THUMB_URL}${slide.thumb}" alt="${slide.name}" class="thumbnail">
+            <div class="card-content">
+                <div class="title">${slide.name}</div>
+                <button onclick="insertSlide('${slide.file}')">Infoga</button>
+            </div>
         </div>
     `).join('');
 }
