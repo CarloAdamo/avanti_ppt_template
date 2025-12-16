@@ -1,15 +1,13 @@
-// Base URLs för GitHub Pages
+// Supabase config
+const SUPABASE_URL = "https://vnjcwffdhywckwnjothu.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_gEtvIpjdu9mSZSrLJjwjXQ_VIxu5WKH";
+
+// Base URLs för GitHub Pages (filer ligger fortfarande här)
 const BASE_URL = "https://carloadamo.github.io/avanti_ppt_template/templates/";
 const THUMB_URL = "https://carloadamo.github.io/avanti_ppt_template/thumbnails/";
 
-// Våra test-slides (senare ersätts detta med data från Supabase)
-const SLIDES = [
-    { id: 1, name: "Slide 1", file: "slide_1.pptx", thumb: "slide_1.png" },
-    { id: 2, name: "Slide 2", file: "slide_2.pptx", thumb: "slide_2.png" },
-    { id: 3, name: "Slide 3", file: "slide_3.pptx", thumb: "slide_3.png" },
-    { id: 4, name: "Slide 4", file: "slide_4.pptx", thumb: "slide_4.png" },
-    { id: 5, name: "Slide 5", file: "slide_5.pptx", thumb: "slide_5.png" },
-];
+// Slides laddas från Supabase
+let SLIDES = [];
 
 // Hämta en fil och konvertera till base64
 async function fetchAsBase64(url) {
@@ -64,9 +62,48 @@ function renderSlides() {
     `).join('');
 }
 
+// Hämta slides från Supabase
+async function loadSlides() {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/slides?select=*`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        SLIDES = await response.json();
+        renderSlides(SLIDES);
+    } catch (error) {
+        console.error("Error loading slides:", error);
+        document.getElementById('status').textContent = "Kunde inte ladda slides";
+    }
+}
+
+// Sök bland slides
+function searchSlides(query) {
+    if (!query.trim()) {
+        renderSlides(SLIDES);
+        return;
+    }
+
+    const q = query.toLowerCase();
+    const filtered = SLIDES.filter(slide =>
+        (slide.name || '').toLowerCase().includes(q) ||
+        (slide.description || '').toLowerCase().includes(q) ||
+        (slide.tags || []).some(tag => tag.toLowerCase().includes(q))
+    );
+    renderSlides(filtered);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    Office.onReady(() => {
+    Office.onReady(async () => {
+        document.getElementById('status').textContent = "Laddar...";
+        await loadSlides();
         document.getElementById('status').textContent = "Redo!";
-        renderSlides();
+
+        // Lägg till sökfunktion
+        document.getElementById('search').addEventListener('input', (e) => {
+            searchSlides(e.target.value);
+        });
     });
 });
