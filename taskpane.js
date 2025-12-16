@@ -49,9 +49,9 @@ async function insertSlide(fileName) {
 }
 
 // Rendera listan med slides
-function renderSlides() {
+function renderSlides(slides) {
     const container = document.getElementById('slides');
-    container.innerHTML = SLIDES.map(slide => `
+    container.innerHTML = slides.map(slide => `
         <div class="card">
             <img src="${THUMB_URL}${slide.thumb}" alt="${slide.name}" class="thumbnail">
             <div class="card-content">
@@ -65,13 +65,16 @@ function renderSlides() {
 // Hämta slides från Supabase
 async function loadSlides() {
     try {
+        console.log("Fetching from Supabase...");
         const response = await fetch(`${SUPABASE_URL}/rest/v1/slides?select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
+        console.log("Response status:", response.status);
         SLIDES = await response.json();
+        console.log("Loaded slides:", SLIDES);
         renderSlides(SLIDES);
     } catch (error) {
         console.error("Error loading slides:", error);
