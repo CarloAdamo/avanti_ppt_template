@@ -1,0 +1,25 @@
+{
+  "name": "avanti_ppt_template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generate_embeddings.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CarloAdamo/avanti_ppt_template.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CarloAdamo/avanti_ppt_template/issues"
+  },
+  "homepage": "https://github.com/CarloAdamo/avanti_ppt_template#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.88.0",
+    "dotenv": "^17.2.3"
+  }
+}

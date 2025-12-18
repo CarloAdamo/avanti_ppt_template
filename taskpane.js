@@ -2,9 +2,7 @@
 const SUPABASE_URL = "https://vnjcwffdhywckwnjothu.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_gEtvIpjdu9mSZSrLJjwjXQ_VIxu5WKH";
 
-// Base URLs för GitHub Pages (filer ligger fortfarande här)
-const BASE_URL = "https://carloadamo.github.io/avanti_ppt_template/templates/";
-const THUMB_URL = "https://carloadamo.github.io/avanti_ppt_template/thumbnails/";
+// URLs hämtas nu direkt från databasen (file_url, thumb_url)
 
 // Slides laddas från Supabase
 let SLIDES = [];
@@ -24,13 +22,30 @@ async function fetchAsBase64(url) {
     });
 }
 
-// Infoga slide från en .pptx-fil
-async function insertSlide(fileName) {
+// Hämta signerad URL för en slide (privat bucket)
+async function getSignedSlideUrl(slideId) {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/get-slide-url`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ slideId })
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data.url;
+}
+
+// Infoga slide från privat Storage (hämtar signerad URL on-demand)
+async function insertSlide(slideId) {
     const statusEl = document.getElementById('status');
     statusEl.textContent = "Hämtar template...";
 
     try {
-        const base64 = await fetchAsBase64(BASE_URL + fileName);
+        // Hämta signerad URL (giltig i 5 min)
+        const signedUrl = await getSignedSlideUrl(slideId);
+
+        const base64 = await fetchAsBase64(signedUrl);
         statusEl.textContent = "Infogar slide...";
 
         await PowerPoint.run(async (context) => {
@@ -53,10 +68,10 @@ function renderSlides(slides) {
     const container = document.getElementById('slides');
     container.innerHTML = slides.map(slide => `
         <div class="card">
-            <img src="${THUMB_URL}${slide.thumb}" alt="${slide.name}" class="thumbnail">
+            <img src="${slide.thumb_url}" alt="${slide.name}" class="thumbnail">
             <div class="card-content">
                 <div class="title">${slide.name}</div>
-                <button onclick="insertSlide('${slide.file}')">Infoga</button>
+                <button onclick="insertSlide(${slide.id})">Infoga</button>
             </div>
         </div>
     `).join('');
