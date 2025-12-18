@@ -13,9 +13,9 @@ PowerPoint-tillägg som låter användare söka bland företagets slide-template
 - Frontend hosted på GitHub Pages
 - Semantisk sökning via embeddings (pgvector)
 - Supabase-integration för metadata, filer och embeddings
+- **Master-fil approach** - laddar ner master-filen en gång och infogar specifik slide via `sourceSlideIds`
 
-**Nästa steg:**
-- Bygga pipeline-repo för att processa 3000+ slides automatiskt
+**Pipeline-repo:** `avanti-slide-pipeline` - processar slides automatiskt
 
 ## Arkitektur
 
@@ -25,6 +25,7 @@ PowerPoint-tillägg som låter användare söka bland företagets slide-template
 │  ┌───────────────────────────────────────────────┐  │
 │  │  Task Pane (Add-in)                           │  │
 │  │  - Sökfält (semantisk sökning)                │  │
+│  │  - Filter (template_type, section_name)       │  │
 │  │  - Thumbnails                                 │  │
 │  │  - "Infoga"-knappar                           │  │
 │  └───────────────────────────────────────────────┘  │
@@ -44,35 +45,58 @@ PowerPoint-tillägg som låter användare söka bland företagets slide-template
 │  ┌───────────────────────────────────────────────┐  │
 │  │  Database (PostgreSQL + pgvector)             │  │
 │  │  - slides: metadata, tags, embeddings         │  │
-│  │  - search_slides(): RPC för sökning           │  │
+│  │  - slide_id: PowerPoints interna ID           │  │
 │  └───────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────┐  │
 │  │  Storage                                      │  │
-│  │  - slides bucket: .pptx-filer                 │  │
-│  │  - thumbnails bucket: .png-filer              │  │
+│  │  - slides bucket: master.pptx (PRIVAT)        │  │
+│  │  - thumbnails bucket: slide_N.png (PUBLIC)    │  │
 │  └───────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────┐  │
 │  │  Edge Functions                               │  │
-│  │  - search-slides: konverterar query→embedding │  │
+│  │  - search-slides: semantisk sökning           │  │
+│  │  - get-slide-url: signed URL + slide_id       │  │
+│  │  - get-filter-options: filter-värden          │  │
 │  └───────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────┘
 ```
+
+## Master-fil approach
+
+**Varför:** pptx-automizer kopierar alla resurser till varje extraherad slide, vilket resulterar i enorma filer (86 MB × 189 slides = 16 GB).
+
+**Lösning:** Vi laddar upp master-filen EN gång och använder PowerPoints interna `slide_id` för att infoga specifik slide.
+
+| Approach | Lagring för 189 slides |
+|----------|------------------------|
+| Individuella slides | ~16 GB |
+| Master-fil | ~72 MB |
+
+**Hur det fungerar:**
+1. Add-in anropar `get-slide-url` med databas-ID
+2. Edge Function returnerar: `{ url, slideId, slideIndex }`
+3. Add-in laddar ner master-filen som base64
+4. Add-in använder `insertSlidesFromBase64(base64, { sourceSlideIds: [slideId] })`
+5. PowerPoint infogar ENDAST den specifika sliden
 
 ## Databasschema (slides)
 
 | Kolumn | Typ | Beskrivning |
 |--------|-----|-------------|
 | id | integer | Primary key |
-| name | text | Slide-titel |
-| description | text | Beskrivning |
-| tags | text[] | Söktaggar |
-| file | text | Filnamn (legacy) |
-| file_url | text | Full URL till .pptx i Storage |
-| thumb | text | Thumbnail-filnamn (legacy) |
-| thumb_url | text | Full URL till thumbnail i Storage |
+| name | text | LLM-genererad titel |
+| description | text | LLM-genererad beskrivning |
+| tags | text[] | LLM-genererade söktaggar |
+| file | text | Storage path till master-fil |
+| thumb | text | Storage path till thumbnail |
+| thumb_url | text | Public URL till thumbnail |
 | embedding | vector(1536) | OpenAI embedding |
-| source_file | text | Ursprunglig master-fil |
-| source_slide_index | integer | Slide-nummer i källfilen |
+| source_file | text | Ursprunglig master-fil (utan extension) |
+| source_slide_index | integer | Slide-nummer i källfilen (1-baserat) |
+| template_type | text | Template-typ (t.ex. "Proposal") |
+| section_name | text | Sektionsnamn (t.ex. "Executive Summary") |
+| **slide_id** | text | **PowerPoints interna ID för Office.js** |
+| **master_file** | text | **Storage path till master-filen** |
 | created_at | timestamptz | Skapad |
 
 ## Filstruktur
@@ -82,64 +106,97 @@ PowerPoint-tillägg som låter användare söka bland företagets slide-template
 ├── manifest.xml          # Office Add-in manifest
 ├── taskpane.html         # UI för sidopanelen
 ├── taskpane.js           # Logik för sökning och infogning
-├── taskpane.css          # (styles i HTML)
+├── taskpane.css          # Styles
 ├── assets/               # Ikoner för tillägget
 │   ├── icon-16.png
 │   ├── icon-32.png
 │   └── icon-80.png
 ├── supabase/
 │   └── functions/
-│       └── search-slides/  # Edge Function
-├── generate_embeddings.js  # Script för att generera embeddings
-├── migrate_to_storage.js   # Engångsscript för migration
-└── templates/              # (legacy - filer nu i Supabase Storage)
-    └── thumbnails/
+│       └── search-slides/  # Edge Function (lokal kopia)
+├── generate_embeddings.js  # Legacy script
+└── migrate_to_storage.js   # Legacy script
 ```
 
 ## Teknisk stack
 
 - **Frontend:** Vanilla JS, Office.js API
-- **Hosting:** GitHub Pages (endast frontend)
+- **Hosting:** GitHub Pages
 - **Databas:** Supabase PostgreSQL + pgvector
-- **Fillagring:** Supabase Storage
+- **Fillagring:** Supabase Storage (privat för slides, public för thumbnails)
 - **Sökning:** OpenAI text-embedding-3-small (1536 dim)
 - **Edge Functions:** Deno (Supabase)
 
 ## Viktiga API:er
 
-### Infoga slide från .pptx-fil
+### Infoga slide med sourceSlideIds (ny approach)
 ```javascript
-async function insertSlide(fileUrl) {
-    const base64 = await fetchAsBase64(fileUrl);
+async function insertSlide(slideId) {
+    // Hämta signerad URL + PowerPoint slide-ID
+    const { url, slideId: pptSlideId } = await getSignedSlideUrl(slideId);
+
+    const base64 = await fetchAsBase64(url);
+
     await PowerPoint.run(async (context) => {
         context.presentation.insertSlidesFromBase64(base64, {
-            formatting: PowerPoint.InsertSlideFormatting.keepSourceFormatting
+            formatting: PowerPoint.InsertSlideFormatting.keepSourceFormatting,
+            sourceSlideIds: [pptSlideId]  // ENDAST denna slide
         });
         await context.sync();
     });
 }
 ```
 
-### Hämta slides från Supabase
+### get-slide-url Edge Function
 ```javascript
-const response = await fetch(`${SUPABASE_URL}/rest/v1/slides?select=*`, {
-    headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-    }
-});
+// Request
+POST /functions/v1/get-slide-url
+{ "slideId": 6 }
+
+// Response
+{
+    "url": "https://...signed-url-to-master.pptx...",
+    "slideId": "2147471306",   // PowerPoints interna slide-ID
+    "slideIndex": 6            // 1-baserat index (fallback)
+}
 ```
 
 ### Semantisk sökning
 ```javascript
-const response = await fetch(`${SUPABASE_URL}/functions/v1/search-slides`, {
-    method: "POST",
-    headers: {
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ query })
-});
+// Request
+POST /functions/v1/search-slides
+{
+    "query": "project timeline",
+    "template_type": "Proposal",     // Valfritt filter
+    "section_name": "Project Plan",  // Valfritt filter
+    "limit": 20
+}
+
+// Response
+[
+    {
+        "id": 1,
+        "name": "Projektplan med faser",
+        "description": "...",
+        "tags": ["timeline", "gantt"],
+        "template_type": "Proposal",
+        "section_name": "Project Plan",
+        "thumb_url": "https://...",
+        "similarity": 0.85
+    }
+]
+```
+
+### Hämta filter-alternativ
+```javascript
+// Request
+GET /functions/v1/get-filter-options
+
+// Response
+{
+    "template_types": ["Proposal", "Pitch Deck", ...],
+    "section_names": ["Executive Summary", "Project Timeline", ...]
+}
 ```
 
 ## URLs
@@ -157,19 +214,22 @@ const response = await fetch(`${SUPABASE_URL}/functions/v1/search-slides`, {
 
 ## Relaterade repos
 
-- **avanti-slide-pipeline** (planerat): Automatisk processning av slides
-  - Extrahera slides från stora .pptx-filer
-  - Generera thumbnails
-  - LLM-metadata via GPT-4 Vision
-  - Ladda upp till Supabase Storage
-  - Generera embeddings
+- **avanti-slide-pipeline**: Automatisk processning av slides
+  - Extraherar slides + metadata från stora .pptx-filer
+  - Genererar thumbnails via LibreOffice + Poppler
+  - LLM-metadata via GPT-4o-mini Vision
+  - Laddar upp master-fil till Supabase Storage
+  - Genererar embeddings med text-embedding-3-small
+  - Extraherar slide-IDs för Office.js
 
 ## Framtida förbättringar
 
 - [x] Semantisk sökning med embeddings
 - [x] Supabase-integration
 - [x] Supabase Storage för filer
-- [ ] Metadata-pipeline för 3000+ slides (separat repo)
+- [x] Metadata-pipeline för slides (avanti-slide-pipeline)
+- [x] Master-fil approach med sourceSlideIds
 - [ ] Pagination för stora datamängder
 - [ ] Förhandsvisning i större format
-- [ ] Kategorifilter
+- [ ] Filter-dropdowns för template_type och section_name
+- [ ] Caching av master-fil för snabbare infogning

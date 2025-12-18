@@ -22,7 +22,8 @@ async function fetchAsBase64(url) {
     });
 }
 
-// Hämta signerad URL för en slide (privat bucket)
+// Hämta signerad URL + slide-ID för en slide (privat bucket)
+// Returnerar: { url, slideId, slideIndex }
 async function getSignedSlideUrl(slideId) {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/get-slide-url`, {
         method: "POST",
@@ -33,25 +34,35 @@ async function getSignedSlideUrl(slideId) {
     });
     const data = await response.json();
     if (data.error) throw new Error(data.error);
-    return data.url;
+    return data; // { url, slideId, slideIndex }
 }
 
 // Infoga slide från privat Storage (hämtar signerad URL on-demand)
+// Nu använder vi master-filen + sourceSlideIds för att infoga specifik slide
 async function insertSlide(slideId) {
     const statusEl = document.getElementById('status');
     statusEl.textContent = "Hämtar template...";
 
     try {
-        // Hämta signerad URL (giltig i 5 min)
-        const signedUrl = await getSignedSlideUrl(slideId);
+        // Hämta signerad URL + slide-ID (giltig i 5 min)
+        const { url, slideId: pptSlideId, slideIndex } = await getSignedSlideUrl(slideId);
 
-        const base64 = await fetchAsBase64(signedUrl);
+        const base64 = await fetchAsBase64(url);
         statusEl.textContent = "Infogar slide...";
 
         await PowerPoint.run(async (context) => {
-            context.presentation.insertSlidesFromBase64(base64, {
+            // Använd sourceSlideIds för att ENDAST infoga den specifika sliden
+            // från master-filen (istället för hela presentationen)
+            const options = {
                 formatting: PowerPoint.InsertSlideFormatting.keepSourceFormatting
-            });
+            };
+
+            // Om vi har pptSlideId (PowerPoints interna ID), använd det
+            if (pptSlideId) {
+                options.sourceSlideIds = [pptSlideId];
+            }
+
+            context.presentation.insertSlidesFromBase64(base64, options);
             await context.sync();
         });
 
