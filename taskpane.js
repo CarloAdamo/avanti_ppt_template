@@ -7,8 +7,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_gEtvIpjdu9mSZSrLJjwjXQ_VIxu5WKH";
 // Slides laddas från Supabase
 let SLIDES = [];
 
-// Filter options
-let FILTER_OPTIONS = { template_types: [], section_names: [] };
+// Filter options (sections grouped by template)
+let FILTER_OPTIONS = { template_types: [], sections_by_template: {} };
 
 // Current filter state
 let currentFilters = { template_type: '', section_name: '' };
@@ -131,14 +131,12 @@ async function loadFilterOptions() {
     }
 }
 
-// Populate filter dropdowns with options
+// Populate template dropdown (sections are updated when template changes)
 function populateFilterDropdowns() {
     const templateSelect = document.getElementById('filter-template');
-    const sectionSelect = document.getElementById('filter-section');
 
-    // Clear existing options (except first "All" option)
+    // Clear existing options
     templateSelect.innerHTML = '<option value="">All templates</option>';
-    sectionSelect.innerHTML = '<option value="">All sections</option>';
 
     // Add template options
     FILTER_OPTIONS.template_types.forEach(type => {
@@ -148,13 +146,35 @@ function populateFilterDropdowns() {
         templateSelect.appendChild(option);
     });
 
-    // Add section options
-    FILTER_OPTIONS.section_names.forEach(name => {
+    // Initially show no sections (user must select template first)
+    updateSectionDropdown('');
+}
+
+// Update section dropdown based on selected template
+function updateSectionDropdown(selectedTemplate) {
+    const sectionSelect = document.getElementById('filter-section');
+
+    // Clear current section selection
+    currentFilters.section_name = '';
+
+    if (!selectedTemplate) {
+        // No template selected - disable section dropdown
+        sectionSelect.innerHTML = '<option value="">Select template first</option>';
+        sectionSelect.disabled = true;
+        return;
+    }
+
+    // Get sections for selected template
+    const sections = FILTER_OPTIONS.sections_by_template[selectedTemplate] || [];
+
+    sectionSelect.innerHTML = '<option value="">All sections</option>';
+    sections.forEach(name => {
         const option = document.createElement('option');
         option.value = name;
         option.textContent = name;
         sectionSelect.appendChild(option);
     });
+    sectionSelect.disabled = false;
 }
 
 // Semantic search via Supabase Edge Function (with filters)
@@ -218,6 +238,8 @@ async function init() {
     // Filter change handlers
     document.getElementById('filter-template').addEventListener('change', (e) => {
         currentFilters.template_type = e.target.value;
+        // Update section dropdown to show only sections for this template
+        updateSectionDropdown(e.target.value);
         searchSlides(document.getElementById('search').value);
     });
 
