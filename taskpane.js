@@ -120,6 +120,7 @@ async function loadFilterOptions() {
         const response = await fetch(`${SUPABASE_URL}/functions/v1/get-filter-options`, {
             method: "POST",
             headers: {
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
                 "Content-Type": "application/json"
             }
         });
