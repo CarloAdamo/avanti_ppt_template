@@ -7,6 +7,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_gEtvIpjdu9mSZSrLJjwjXQ_VIxu5WKH";
 // Slides laddas från Supabase
 let SLIDES = [];
 
+// Filter options
+let FILTER_OPTIONS = { template_types: [], section_names: [] };
+
+// Current filter state
+let currentFilters = { template_type: '', section_name: '' };
+
 // Hämta en fil och konvertera till base64
 async function fetchAsBase64(url) {
     const response = await fetch(url);
@@ -41,14 +47,14 @@ async function getSignedSlideUrl(slideId) {
 // Nu använder vi master-filen + sourceSlideIds för att infoga specifik slide
 async function insertSlide(slideId) {
     const statusEl = document.getElementById('status');
-    statusEl.textContent = "Hämtar template...";
+    statusEl.textContent = "Fetching template...";
 
     try {
-        // Hämta signerad URL + slide-ID (giltig i 5 min)
+        // Get signed URL + slide-ID (valid for 5 min)
         const { url, slideId: pptSlideId, slideIndex } = await getSignedSlideUrl(slideId);
 
         const base64 = await fetchAsBase64(url);
-        statusEl.textContent = "Infogar slide...";
+        statusEl.textContent = "Inserting slide...";
 
         await PowerPoint.run(async (context) => {
             // Använd sourceSlideIds för att ENDAST infoga den specifika sliden
@@ -66,10 +72,10 @@ async function insertSlide(slideId) {
             await context.sync();
         });
 
-        statusEl.textContent = "Slide infogad!";
+        statusEl.textContent = "Slide inserted!";
         setTimeout(() => { statusEl.textContent = ""; }, 2000);
     } catch (error) {
-        statusEl.textContent = "Fel: " + error.message;
+        statusEl.textContent = "Error: " + error.message;
         console.error("Insert slide error:", error);
     }
 }
@@ -82,7 +88,7 @@ function renderSlides(slides) {
             <img src="${slide.thumb_url}" alt="${slide.name}" class="thumbnail">
             <div class="card-content">
                 <div class="title">${slide.name}</div>
-                <button onclick="insertSlide(${slide.id})">Infoga</button>
+                <button onclick="insertSlide(${slide.id})">Insert</button>
             </div>
         </div>
     `).join('');
@@ -104,55 +110,120 @@ async function loadSlides() {
         renderSlides(SLIDES);
     } catch (error) {
         console.error("Error loading slides:", error);
-        document.getElementById('status').textContent = "Kunde inte ladda slides";
+        document.getElementById('status').textContent = "Could not load slides";
     }
 }
 
-// Semantisk sökning via Supabase Edge Function
-async function semanticSearch(query) {
+// Load filter options from Supabase Edge Function
+async function loadFilterOptions() {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/get-filter-options`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+        FILTER_OPTIONS = await response.json();
+        console.log("Filter options:", FILTER_OPTIONS);
+        populateFilterDropdowns();
+    } catch (error) {
+        console.error("Error loading filter options:", error);
+    }
+}
+
+// Populate filter dropdowns with options
+function populateFilterDropdowns() {
+    const templateSelect = document.getElementById('filter-template');
+    const sectionSelect = document.getElementById('filter-section');
+
+    // Clear existing options (except first "All" option)
+    templateSelect.innerHTML = '<option value="">All templates</option>';
+    sectionSelect.innerHTML = '<option value="">All sections</option>';
+
+    // Add template options
+    FILTER_OPTIONS.template_types.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        templateSelect.appendChild(option);
+    });
+
+    // Add section options
+    FILTER_OPTIONS.section_names.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        sectionSelect.appendChild(option);
+    });
+}
+
+// Semantic search via Supabase Edge Function (with filters)
+async function semanticSearch(query, filters = {}) {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/search-slides`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({
+            query,
+            template_type: filters.template_type || null,
+            section_name: filters.section_name || null
+        })
     });
     return response.json();
 }
 
-// Sök bland slides
+// Search slides with filters
 let searchTimeout = null;
 async function searchSlides(query) {
-    if (!query.trim()) {
+    const hasFilters = currentFilters.template_type || currentFilters.section_name;
+
+    if (!query.trim() && !hasFilters) {
         renderSlides(SLIDES);
+        document.getElementById('status').textContent = "";
         return;
     }
 
-    // Visa loading
-    document.getElementById('status').textContent = "Söker...";
+    // Show loading
+    document.getElementById('status').textContent = "Searching...";
 
     try {
-        const results = await semanticSearch(query);
+        // If no search query but has filters, use a generic query
+        const searchQuery = query.trim() || "slide";
+        const results = await semanticSearch(searchQuery, currentFilters);
         renderSlides(results);
-        document.getElementById('status').textContent = `${results.length} träffar`;
+        document.getElementById('status').textContent = `${results.length} results`;
     } catch (error) {
         console.error("Search error:", error);
-        document.getElementById('status').textContent = "Sökfel";
+        document.getElementById('status').textContent = "Search error";
     }
 }
 
 async function init() {
-    document.getElementById('status').textContent = "Laddar...";
-    await loadSlides();
-    document.getElementById('status').textContent = "Redo!";
+    document.getElementById('status').textContent = "Loading...";
 
-    // Lägg till sökfunktion med debounce (väntar 500ms efter sista knapptryckning)
+    // Load slides and filter options in parallel
+    await Promise.all([loadSlides(), loadFilterOptions()]);
+    document.getElementById('status').textContent = "Ready!";
+
+    // Search input with debounce (waits 500ms after last keypress)
     document.getElementById('search').addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             searchSlides(e.target.value);
         }, 500);
+    });
+
+    // Filter change handlers
+    document.getElementById('filter-template').addEventListener('change', (e) => {
+        currentFilters.template_type = e.target.value;
+        searchSlides(document.getElementById('search').value);
+    });
+
+    document.getElementById('filter-section').addEventListener('change', (e) => {
+        currentFilters.section_name = e.target.value;
+        searchSlides(document.getElementById('search').value);
     });
 }
 

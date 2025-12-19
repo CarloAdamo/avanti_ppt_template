@@ -78,7 +78,15 @@
 <body>
     <header>
         <h3>Avanti Templates</h3>
-        <input type="text" id="search" placeholder="Sök slides..." style="width:100%;padding:8px;margin:8px 0;box-sizing:border-box;">
+        <input type="text" id="search" placeholder="Search slides..." style="width:100%;padding:8px;margin:8px 0;box-sizing:border-box;">
+        <div id="filters" style="display:flex;gap:8px;margin:8px 0;">
+            <select id="filter-template" style="flex:1;padding:6px;">
+                <option value="">All templates</option>
+            </select>
+            <select id="filter-section" style="flex:1;padding:6px;">
+                <option value="">All sections</option>
+            </select>
+        </div>
         <p id="status" style="margin:8px 0;color:#666;"></p>
     </header>
     <main style="padding:12px;">
