@@ -424,6 +424,16 @@ async function uploadPresentation() {
         return;
     }
 
+    // Confirmation dialog
+    const confirmed = confirm(
+        'Add this presentation to the template library?\n\n' +
+        'All slides will be processed and made available for everyone to search and use.'
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
     showModal();
 
     try {
