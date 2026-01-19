@@ -73,6 +73,88 @@
         button {
             padding: 6px 10px;
         }
+
+        /* Upload button */
+        .upload-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .upload-btn:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        .upload-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Upload modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 300px;
+            text-align: center;
+        }
+        .modal h3 {
+            margin: 0 0 16px 0;
+            color: #333;
+        }
+        .modal .progress-text {
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .modal .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .modal .progress-bar-fill {
+            height: 100%;
+            background: #3C8A59;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .modal .error {
+            color: #c00;
+            margin-bottom: 12px;
+        }
+        .modal .success {
+            color: #3C8A59;
+            margin-bottom: 12px;
+        }
+        .modal button {
+            padding: 8px 16px;
+            background: #3C8A59;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -89,7 +171,24 @@
             </select>
         </div>
         <p id="status" style="margin:8px 0;color:rgba(255,255,255,0.8);"></p>
+        <button class="upload-btn" onclick="uploadPresentation()">
+            📤 Add this presentation to library
+        </button>
     </header>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-title">Uploading...</h3>
+            <p id="modal-text" class="progress-text">Preparing presentation...</p>
+            <div class="progress-bar">
+                <div id="modal-progress" class="progress-bar-fill"></div>
+            </div>
+            <p id="modal-error" class="error" style="display:none;"></p>
+            <p id="modal-success" class="success" style="display:none;"></p>
+            <button id="modal-close" onclick="closeModal()" style="display:none;">Close</button>
+        </div>
+    </div>
     <main style="padding:12px;">
         <div id="slides"></div>
     </main>
