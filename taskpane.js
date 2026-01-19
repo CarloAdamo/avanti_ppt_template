@@ -416,24 +416,29 @@ async function pollJobStatus(jobId, onProgress) {
     throw new Error('Processing timed out');
 }
 
-// Main upload function
-async function uploadPresentation() {
+// Show confirmation modal
+function uploadPresentation() {
     // Check if Office.js is available
     if (typeof Office === 'undefined' || !Office.context || !Office.context.document) {
-        alert('This feature only works inside PowerPoint');
+        document.getElementById('modal-error').textContent = 'This feature only works inside PowerPoint';
+        document.getElementById('modal-error').style.display = 'block';
+        document.getElementById('upload-modal').classList.add('active');
+        document.getElementById('modal-close').style.display = 'inline-block';
         return;
     }
 
-    // Confirmation dialog
-    const confirmed = confirm(
-        'Add this presentation to the template library?\n\n' +
-        'All slides will be processed and made available for everyone to search and use.'
-    );
+    // Show confirmation dialog
+    document.getElementById('confirm-modal').classList.add('active');
+}
 
-    if (!confirmed) {
-        return;
-    }
+// Cancel upload
+function cancelUpload() {
+    document.getElementById('confirm-modal').classList.remove('active');
+}
 
+// Confirm and start upload
+async function confirmUpload() {
+    document.getElementById('confirm-modal').classList.remove('active');
     showModal();
 
     try {

@@ -176,6 +176,18 @@
         </button>
     </header>
 
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal">
+            <h3>Add to library?</h3>
+            <p style="color:#666;margin-bottom:16px;">All slides will be processed and made available for everyone to search and use.</p>
+            <div style="display:flex;gap:8px;justify-content:center;">
+                <button onclick="cancelUpload()" style="background:#999;">Cancel</button>
+                <button onclick="confirmUpload()">Upload</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Upload Modal -->
     <div id="upload-modal" class="modal-overlay">
         <div class="modal">
